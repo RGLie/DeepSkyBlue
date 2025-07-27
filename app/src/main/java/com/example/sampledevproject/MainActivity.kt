@@ -18,6 +18,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.rememberScrollState
 import androidx.core.net.toUri
+import com.example.deepskyblue.DeepSkyBlueTextRecognitionProcessor
+import com.example.deepskyblue.TextOcrBlock
 import com.example.sampledevproject.ui.theme.SampleDevProjectTheme
 
 class MainActivity : ComponentActivity() {
@@ -39,7 +41,41 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
+    var ocrResult by remember { mutableStateOf("Processing...") }
+    val context = LocalContext.current
 
+    // 리소스 URI를 내부에서 생성
+    val imageUri = "android.resource://${context.packageName}/${R.drawable.test_image_2}".toUri()
+
+    // 이미지 URI가 변경될 때마다 한 번만 OCR 실행
+    LaunchedEffect(imageUri) {
+        DeepSkyBlueTextRecognitionProcessor(useKorean = true)
+            .processImageAsList(
+                context = context,
+                uri = imageUri,
+                onSuccess = { blocks: List<TextOcrBlock> ->
+                    // build a single string showing text + corners
+                    ocrResult = blocks.joinToString("\n\n") { block ->
+                        // format corners as "(x,y), (x,y)…"
+                        val corners = block.cornerPoints
+                            .joinToString(", ") { p -> "(${p.x},${p.y})" }
+
+                        "Text: ${block.text}\nCorners: $corners\n"
+                    }
+                },
+                onFailure = { error ->
+                    ocrResult = "OCR Error: \${error.message}"
+                }
+            )
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(text = ocrResult)
+    }
 }
 
 @Preview(showBackground = true)
