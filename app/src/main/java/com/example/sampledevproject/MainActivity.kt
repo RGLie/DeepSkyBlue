@@ -54,9 +54,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 context = context,
                 uri = imageUri,
                 onSuccess = { blocks: List<TextOcrBlock> ->
-                    // build a single string showing text + corners
                     ocrResult = blocks.joinToString("\n\n") { block ->
-                        // format corners as "(x,y), (x,y)…"
                         val corners = block.cornerPoints
                             .joinToString(", ") { p -> "(${p.x},${p.y})" }
 
