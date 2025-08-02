@@ -10,9 +10,9 @@ import android.content.Context
  */
 class DeepSkyBlueProvider private constructor(appContext: Context) {
 
-    private val deepSkyBlue: DeepSkyBlue by lazy { DeepSkyBlueImpl(appContext) }
+    private val deepSkyBlueinstance: DeepSkyBlue by lazy { DeepSkyBlueImpl(appContext) }
 
-    fun getDeepSkyBlue(): DeepSkyBlue = deepSkyBlue
+    fun getDeepSkyBlue(): DeepSkyBlue = deepSkyBlueinstance
 
     companion object {
         @Volatile

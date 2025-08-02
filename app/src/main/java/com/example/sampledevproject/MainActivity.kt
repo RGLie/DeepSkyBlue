@@ -3,36 +3,36 @@ package com.example.sampledevproject
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.rememberScrollState
-import androidx.core.net.toUri
-import com.example.deepskyblue.DeepSkyBlueTextRecognitionProcessor
-import com.example.deepskyblue.TextOcrBlock
+import coil.compose.AsyncImage
+import com.example.deepskyblue.DeepSkyBlueProvider
 import com.example.sampledevproject.ui.theme.SampleDevProjectTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         setContent {
             SampleDevProjectTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainScreen(modifier = Modifier
-                        .padding(innerPadding)
-                        .padding(16.dp))
+                    MainScreen(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .padding(16.dp)
+                    )
                 }
             }
         }
@@ -41,38 +41,62 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
-    var ocrResult by remember { mutableStateOf("Processing...") }
+    var ocrResult by remember { mutableStateOf("") }
     val context = LocalContext.current
+    val dsp = remember { DeepSkyBlueProvider.with(context).getDeepSkyBlue() }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // 리소스 URI를 내부에서 생성
-    val imageUri = "android.resource://${context.packageName}/${R.drawable.test_image_2}".toUri()
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> selectedImageUri = uri }
+    )
 
-    // 이미지 URI가 변경될 때마다 한 번만 OCR 실행
-    LaunchedEffect(imageUri) {
-        DeepSkyBlueTextRecognitionProcessor(useKorean = true)
-            .processImageAsList(
-                context = context,
-                uri = imageUri,
-                onSuccess = { blocks: List<TextOcrBlock> ->
-                    ocrResult = blocks.joinToString("\n\n") { block ->
-                        val corners = block.cornerPoints
-                            .joinToString(", ") { p -> "(${p.x},${p.y})" }
-
-                        "Text: ${block.text}\nCorners: $corners\n"
-                    }
-                },
-                onFailure = { error ->
-                    ocrResult = "OCR Error: \${error.message}"
-                }
-            )
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+    LazyColumn(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.fillMaxWidth()
     ) {
-        Text(text = ocrResult)
+        item {
+            AsyncImage(
+                model = selectedImageUri,
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        item {
+            Button(onClick = {
+                photoPicker.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            }) { Text("사진 1장 선택") }
+        }
+
+        item {
+            Button(onClick = {
+                val uri = selectedImageUri
+                if (uri != null) {
+                    // TODO: uri null exception in DeepSkyBlue
+                    dsp.recognizeTextBlocks(
+                        uri = uri,
+                        useKorean = true,
+                        onSuccess = { blocks ->
+                            ocrResult = blocks.joinToString("\n\n") { block ->
+                                val corners = block.cornerPoints.joinToString(", ") { p -> "(${p.x},${p.y})" }
+                                "Text: ${block.text}\nCorners: $corners"
+                            }
+                        },
+                        onFailure = { e ->
+                            ocrResult = "OCR Error: ${e.message}"
+                        }
+                    )
+                } else {
+                    ocrResult = "이미지를 먼저 선택하세요."
+                }
+            }) { Text("텍스트 인식") }
+        }
+
+        item { Spacer(Modifier.height(15.dp)) }
+        item { Text(text = ocrResult) }
     }
 }
 

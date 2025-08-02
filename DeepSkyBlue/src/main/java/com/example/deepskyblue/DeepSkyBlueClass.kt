@@ -9,20 +9,10 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 
-data class TextOcrBlock(
-    val text: String,
-    val cornerPoints: List<Point>,   // or Array<Point>, your call
-)
-
-
 class DeepSkyBlueClass {
     fun getMessage(): String = "Hello from DeepSkyBlue!!!!"
 }
 
-/**
- * ML Kit 기반 OCR 처리기
- * @param useKorean 한글 인식기를 사용할지 여부
- */
 class DeepSkyBlueTextRecognitionProcessor(
     private val useKorean: Boolean = false
 ) {
@@ -32,13 +22,6 @@ class DeepSkyBlueTextRecognitionProcessor(
         TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     }
 
-    /**
-     * 이미지 Uri로부터 텍스트를 인식하고 콜백 반환
-     * @param context Context
-     * @param uri 이미지 파일 Uri
-     * @param onSuccess 인식된 전체 텍스트
-     * @param onFailure 예외 발생 시
-     */
     fun processImage(
         context: Context,
         uri: Uri,
@@ -100,10 +83,8 @@ class DeepSkyBlueTextRecognitionProcessor(
 //                    val blockText = block.text
 //                    val blockCornerPoints = block.cornerPoints
 //                    val blockFrame = block.boundingBox
-//                    // 블록 내 라인 단위
 ////                    for (line in block.lines) {
 ////                        results.add(line.text)
-////                        // 라인 내 요소 단위
 ////                        for (element in line.elements) {
 ////                            results.add(element.text)
 ////                        }
