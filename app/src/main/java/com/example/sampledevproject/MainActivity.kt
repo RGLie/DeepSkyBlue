@@ -27,6 +27,7 @@ import android.graphics.ImageDecoder
 import android.os.Build
 import android.provider.MediaStore
 import android.content.Context
+import com.example.deepskyblue.ui.DeepSkyBlueImageView
 import com.example.deepskyblue.ui.DeepSkyBluePreview
 
 class MainActivity : ComponentActivity() {
@@ -120,7 +121,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
 //        }
 
         item {
-            DeepSkyBluePreview(
+            DeepSkyBlueImageView(
                 bitmap = bitmap,
                 useKorean = true,
                 resultCallback = { result -> ocrResult = result },
