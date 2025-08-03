@@ -119,6 +119,14 @@ fun MainScreen(modifier: Modifier = Modifier) {
 //                }
 //            }) { Text("텍스트 인식") }
 //        }
+//        item {
+//            DeepSkyBluePreview(
+//                bitmap = bitmap,
+//                useKorean = true,
+//                resultCallback = { result -> ocrResult = result },
+//                modifier = Modifier.fillMaxWidth()
+//            )
+//        }
 
         item {
             DeepSkyBlueImageView(

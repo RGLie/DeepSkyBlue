@@ -35,7 +35,9 @@ fun DeepSkyBlueImageView(
         modifier = modifier
     ) {
         // Canvas test
-        Canvas(modifier = Modifier.fillMaxSize()) {
+        Canvas(modifier = modifier
+            .fillMaxWidth()
+        ) {
             // drawLine (색, 시작위치, 끝 위치)
             drawLine(Color.Red, Offset(10f, 10f), Offset(300f, 300f), strokeWidth = 10f)
 
@@ -49,17 +51,13 @@ fun DeepSkyBlueImageView(
             drawLine(Color.Black, Offset(600f, 600f), Offset(650f, 650f), strokeWidth = 10f)
             drawLine(Color.Black, Offset(650f, 650f), Offset(600f, 650f), strokeWidth = 10f)
             drawLine(Color.Black, Offset(600f, 650f), Offset(650f, 700f), strokeWidth = 10f)
+
+            bitmap?.let {
+                drawImage(it.asImageBitmap(), Offset(0f, 0f), )
+            }
+
         }
 
-        bitmap?.let {
-            Image(
-                bitmap = it.asImageBitmap(),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-            )
-        }
 
         Spacer(Modifier.height(8.dp))
 
