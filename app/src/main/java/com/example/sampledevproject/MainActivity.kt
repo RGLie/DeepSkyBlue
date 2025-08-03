@@ -27,6 +27,7 @@ import android.graphics.ImageDecoder
 import android.os.Build
 import android.provider.MediaStore
 import android.content.Context
+import com.example.deepskyblue.ui.DeepSkyBluePreview
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,17 +75,17 @@ fun MainScreen(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth()
     ) {
-        item {
-            bitmap?.let {
-                Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 400.dp)
-                )
-            }
-        }
+//        item {
+//            bitmap?.let {
+//                Image(
+//                    bitmap = it.asImageBitmap(),
+//                    contentDescription = null,
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .heightIn(max = 400.dp)
+//                )
+//            }
+//        }
 
         item {
             Button(onClick = {
@@ -93,33 +94,44 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 )
             }) { Text("사진 1장 선택") }
         }
+//
+//        item {
+//            Button(onClick = {
+//                val img = bitmap
+//                if (img != null) {
+//                    // TODO: Handle img bitmap null exception
+//                    dsp.recognizeTextBlocks(
+//                        bitmap = img,
+//                        useKorean = true,
+//                        onSuccess = { blocks ->
+//                            ocrResult = blocks.joinToString("\n\n") { block ->
+//                                val corners = block.cornerPoints.joinToString(", ") { p -> "(${p.x},${p.y})" }
+//                                "Text: ${block.text}\nCorners: $corners"
+//                            }
+//                        },
+//                        onFailure = { e ->
+//                            ocrResult = "OCR Error: ${e.message}"
+//                        }
+//                    )
+//                } else {
+//                    ocrResult = "이미지를 먼저 선택하세요."
+//                }
+//            }) { Text("텍스트 인식") }
+//        }
 
         item {
-            Button(onClick = {
-                val img = bitmap
-                if (img != null) {
-                    // TODO: Handle img bitmap null exception
-                    dsp.recognizeTextBlocks(
-                        bitmap = img,
-                        useKorean = true,
-                        onSuccess = { blocks ->
-                            ocrResult = blocks.joinToString("\n\n") { block ->
-                                val corners = block.cornerPoints.joinToString(", ") { p -> "(${p.x},${p.y})" }
-                                "Text: ${block.text}\nCorners: $corners"
-                            }
-                        },
-                        onFailure = { e ->
-                            ocrResult = "OCR Error: ${e.message}"
-                        }
-                    )
-                } else {
-                    ocrResult = "이미지를 먼저 선택하세요."
-                }
-            }) { Text("텍스트 인식") }
+            DeepSkyBluePreview(
+                bitmap = bitmap,
+                useKorean = true,
+                resultCallback = { result -> ocrResult = result },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         item { Spacer(Modifier.height(15.dp)) }
         item { Text(text = ocrResult) }
+
+
     }
 }
 
