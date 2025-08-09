@@ -40,20 +40,6 @@ fun DeepSkyBlueImageView(
             .fillMaxWidth()
             .aspectRatio(aspectRatio)
         ) {
-//            // drawLine (색, 시작위치, 끝 위치)
-//            drawLine(Color.Red, Offset(10f, 10f), Offset(300f, 300f), strokeWidth = 10f)
-//
-//            // drawCircle(색, 반지름, 중앙 위치)
-//            drawCircle(Color.Blue, 300f, Offset(400f, 400f))
-//
-//            // drawRect
-//            drawRect(Color.Magenta, Offset(250f, 250f), Size(500f, 500f))
-//
-//            // 연속해서 그리기
-//            drawLine(Color.Black, Offset(600f, 600f), Offset(650f, 650f), strokeWidth = 10f)
-//            drawLine(Color.Black, Offset(650f, 650f), Offset(600f, 650f), strokeWidth = 10f)
-//            drawLine(Color.Black, Offset(600f, 650f), Offset(650f, 700f), strokeWidth = 10f)
-
             bitmap?.let {
                 drawImage(it.asImageBitmap(), Offset(0f, 0f), )
             }

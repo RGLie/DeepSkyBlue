@@ -1,4 +1,4 @@
-package com.example.deepskyblue
+package com.example.deepskyblue.model
 
 import android.graphics.Point
 

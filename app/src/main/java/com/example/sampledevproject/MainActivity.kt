@@ -27,8 +27,15 @@ import android.graphics.ImageDecoder
 import android.os.Build
 import android.provider.MediaStore
 import android.content.Context
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntSize
+import com.example.deepskyblue.model.OcrResult
 import com.example.deepskyblue.ui.DeepSkyBlueImageView
 import com.example.deepskyblue.ui.DeepSkyBluePreview
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,84 +68,109 @@ fun Uri.toBitmap(context: Context): Bitmap =
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
 
-    var ocrResult by remember { mutableStateOf("") }
     val context = LocalContext.current
-    val dsp = remember { DeepSkyBlueProvider.with(context).getDeepSkyBlue() }
+    val deepSkyBlue = remember { DeepSkyBlueProvider.with(context).getDeepSkyBlue() }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var ocrResult by remember { mutableStateOf<OcrResult?>(null) }
+    var loading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         bitmap = uri?.toBitmap(context)
+        ocrResult = null
+        deepSkyBlue.setOcrResult(null)
     }
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth()
     ) {
-//        item {
-//            bitmap?.let {
-//                Image(
-//                    bitmap = it.asImageBitmap(),
-//                    contentDescription = null,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .heightIn(max = 400.dp)
-//                )
-//            }
-//        }
 
         item {
-            Button(onClick = {
-                photoPicker.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                )
-            }) { Text("사진 1장 선택") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Button(onClick = {
+                    photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }) { Text("사진 1장 선택") }
+
+                Button(
+                    onClick = {
+                        val bmp = bitmap ?: return@Button
+                        scope.launch {
+                            loading = true
+                            try {
+                                val res = deepSkyBlue.extractText(bmp, useKorean = true)
+                                ocrResult = res
+                                deepSkyBlue.setOcrResult(res)
+                            } catch (_: Exception) {
+                                ocrResult = null
+                                deepSkyBlue.setOcrResult(null)
+                            } finally {
+                                loading = false
+                            }
+                        }
+                    },
+                    enabled = bitmap != null && !loading
+                ) { Text(if (loading) "처리 중..." else "OCR 실행") }
+            }
         }
-//
+
+
+        item { Spacer(Modifier.height(12.dp)) }
+
+        item {
+            val bmp = bitmap
+            if (bmp != null) {
+                val aspect = if (bmp.height == 0) 1f else bmp.width.toFloat() / bmp.height
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(aspect)
+                        .pointerInput(Unit) {
+                            detectTapGestures { offset ->
+                                deepSkyBlue.handleTouch(offset.x, offset.y)
+                            }
+                        }
+                ) {
+                    val a = ocrResult // to add dependency
+
+                    val img = bmp.asImageBitmap()
+                    val dstSize = IntSize(size.width.toInt(), size.height.toInt())
+                    drawImage(
+                        image = img,
+                        srcSize = IntSize(img.width, img.height),
+                        dstSize = dstSize
+                    )
+                    deepSkyBlue.drawOverlay(this, Size(size.width, size.height))
+                }
+            }
+        }
+
+        item { Spacer(Modifier.height(12.dp)) }
+
+        item {
+            val text = ocrResult?.blocks?.joinToString("\n\n") { b ->
+                val c = b.cornerPoints.joinToString(", ") { p -> "(${p.x},${p.y})" }
+                "Text: ${b.text}\nCorners: $c"
+            } ?: ""
+            Text(text)
+        }
+
+        item {
+            Text("blocks: ${ocrResult?.blocks?.size ?: 0}")
+        }
 //        item {
-//            Button(onClick = {
-//                val img = bitmap
-//                if (img != null) {
-//                    // TODO: Handle img bitmap null exception
-//                    dsp.recognizeTextBlocks(
-//                        bitmap = img,
-//                        useKorean = true,
-//                        onSuccess = { blocks ->
-//                            ocrResult = blocks.joinToString("\n\n") { block ->
-//                                val corners = block.cornerPoints.joinToString(", ") { p -> "(${p.x},${p.y})" }
-//                                "Text: ${block.text}\nCorners: $corners"
-//                            }
-//                        },
-//                        onFailure = { e ->
-//                            ocrResult = "OCR Error: ${e.message}"
-//                        }
-//                    )
-//                } else {
-//                    ocrResult = "이미지를 먼저 선택하세요."
-//                }
-//            }) { Text("텍스트 인식") }
-//        }
-//        item {
-//            DeepSkyBluePreview(
+//            DeepSkyBlueImageView(
 //                bitmap = bitmap,
 //                useKorean = true,
 //                resultCallback = { result -> ocrResult = result },
 //                modifier = Modifier.fillMaxWidth()
 //            )
 //        }
-
-        item {
-            DeepSkyBlueImageView(
-                bitmap = bitmap,
-                useKorean = true,
-                resultCallback = { result -> ocrResult = result },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        item { Spacer(Modifier.height(15.dp)) }
-        item { Text(text = ocrResult) }
+//
+//        item { Spacer(Modifier.height(15.dp)) }
+//        item { Text(text = ocrResult) }
 
 
     }

@@ -1,8 +1,8 @@
 package com.example.deepskyblue
 
 import android.content.Context
-import android.graphics.Point
 import android.net.Uri
+import com.example.deepskyblue.model.TextOcrBlock
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
