@@ -134,8 +134,7 @@ internal class DeepSkyBlueImpl(private val appContext: Context) : DeepSkyBlue {
                     for (i in 1 until b.cornerPoints.size) lineTo(b.cornerPoints[i].x * sx, b.cornerPoints[i].y * sy)
                     close()
                 }
-                val sel = selectedIndex == idx
-                val color = if (sel) Color(0xFF00C853) else Color.White.copy(alpha = 1f)
+                val color = Color.White.copy(alpha = 1f)
                 drawScope.drawPath(path = path, color = color, style = stroke)
             }
         }
@@ -162,6 +161,24 @@ internal class DeepSkyBlueImpl(private val appContext: Context) : DeepSkyBlue {
         selectedIndex = if (hit >= 0) hit else null
         return hit >= 0
     }
+
+    override fun getSelectedText(): String? =
+        lastResult?.let { res ->
+            val i = selectedIndex ?: return null
+            res.blocks.getOrNull(i)?.text
+        }
+
+
+    override fun onTouchCanvas(x: Float, y: Float, canvasWidth: Float, canvasHeight: Float): Boolean {
+        val res = lastResult ?: return false
+        if (res.imageWidth <= 0 || res.imageHeight <= 0 || canvasWidth <= 0f || canvasHeight <= 0f) return false
+        val ix = x * res.imageWidth / canvasWidth
+        val iy = y * res.imageHeight / canvasHeight
+        return handleTouch(ix, iy) // = 기존 handleTouch(ix, iy)
+    }
+
+    override fun getSelectedIndex(): Int? = selectedIndex
+
 
     private suspend fun <T> awaitTask(task: Task<T>): T = suspendCancellableCoroutine { cont ->
         task.addOnSuccessListener(OnSuccessListener { if (!cont.isCompleted) cont.resume(it) })

@@ -47,4 +47,11 @@ interface DeepSkyBlue {
     )
 
     fun handleTouch(x: Float, y: Float): Boolean
+
+    fun getSelectedText(): String?
+
+    fun getSelectedIndex(): Int?
+
+    fun onTouchCanvas(x: Float, y: Float, canvasWidth: Float, canvasHeight: Float): Boolean
+
 }

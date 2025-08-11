@@ -31,9 +31,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.IntSize
 import com.example.deepskyblue.model.OcrResult
+import com.example.deepskyblue.ui.DeepSkyBlueAction
 import com.example.deepskyblue.ui.DeepSkyBlueImageView
+import com.example.deepskyblue.ui.DeepSkyBlueOverlayBox
 import com.example.deepskyblue.ui.DeepSkyBluePreview
 import kotlinx.coroutines.launch
 
@@ -74,6 +78,8 @@ fun MainScreen(modifier: Modifier = Modifier) {
     var ocrResult by remember { mutableStateOf<OcrResult?>(null) }
     var loading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val clipboard = LocalClipboardManager.current
+    var touchTick by remember { mutableStateOf(0) } // 선택 변경 트리거
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -116,36 +122,43 @@ fun MainScreen(modifier: Modifier = Modifier) {
             }
         }
 
-
-        item { Spacer(Modifier.height(12.dp)) }
-
         item {
-            val bmp = bitmap
-            if (bmp != null) {
-                val aspect = if (bmp.height == 0) 1f else bmp.width.toFloat() / bmp.height
-                Canvas(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(aspect)
-                        .pointerInput(Unit) {
-                            detectTapGestures { offset ->
-                                deepSkyBlue.handleTouch(offset.x, offset.y)
-                            }
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                DeepSkyBlueOverlayBox(
+                    engine = deepSkyBlue,
+                    result = ocrResult,
+                    copyEnabled = true,
+                    extraActions = listOf(
+                        DeepSkyBlueAction("translate", "번역") { hit ->
+                            /* 번역 호출 지점 */
                         }
-                ) {
-                    val a = ocrResult // to add dependency
-
-                    val img = bmp.asImageBitmap()
-                    val dstSize = IntSize(size.width.toInt(), size.height.toInt())
-                    drawImage(
-                        image = img,
-                        srcSize = IntSize(img.width, img.height),
-                        dstSize = dstSize
                     )
-                    deepSkyBlue.drawOverlay(this, Size(size.width, size.height))
+                ) {
+                    val bmp = bitmap
+                    if (bmp != null) {
+                        val aspect = if (bmp.height == 0) 1f else bmp.width.toFloat() / bmp.height
+                        Canvas(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(aspect)
+                        ) {
+                            val img = bmp.asImageBitmap()
+                            val dstSize = IntSize(size.width.toInt(), size.height.toInt())
+                            drawImage(
+                                image = img,
+                                srcSize = IntSize(img.width, img.height),
+                                dstSize = dstSize
+                            )
+//                            deepSkyBlue.drawOverlay(this, Size(size.width, size.height))
+                        }
+                    }
                 }
             }
+
         }
+        item { Spacer(Modifier.height(12.dp)) }
 
         item { Spacer(Modifier.height(12.dp)) }
 
