@@ -54,4 +54,13 @@ interface DeepSkyBlue {
 
     fun onTouchCanvas(x: Float, y: Float, canvasWidth: Float, canvasHeight: Float): Boolean
 
+    suspend fun summarizeText(text: String, model: String? = null, langHint: String? = null): String
+
+    suspend fun summarizeAll(model: String? = null, langHint: String? = null): String?
+
+    suspend fun summarizeSelected(model: String? = null, langHint: String? = null): String?
+
+    suspend fun translateSelected(model: String? = null, langHint: String? = null): String?
+
+
 }

@@ -80,6 +80,8 @@ fun MainScreen(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
     var touchTick by remember { mutableStateOf(0) } // 선택 변경 트리거
+    var summaryText by remember { mutableStateOf("") }
+
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -97,6 +99,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Button(onClick = {
+                    summaryText = ""
                     photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 }) { Text("사진 1장 선택") }
 
@@ -109,6 +112,8 @@ fun MainScreen(modifier: Modifier = Modifier) {
                                 val res = deepSkyBlue.extractText(bmp, useKorean = true)
                                 ocrResult = res
                                 deepSkyBlue.setOcrResult(res)
+                                val sum = deepSkyBlue.summarizeAll(langHint = "ko").orEmpty()
+                                summaryText = if (sum.isBlank()) "요약 결과가 비어 있습니다." else "요약: " + sum
                             } catch (_: Exception) {
                                 ocrResult = null
                                 deepSkyBlue.setOcrResult(null)
@@ -122,6 +127,30 @@ fun MainScreen(modifier: Modifier = Modifier) {
             }
         }
 
+        // usage 1
+//        item {
+//            val bmp = bitmap
+//            if (bmp != null) {
+//                val aspect = if (bmp.height == 0) 1f else bmp.width.toFloat() / bmp.height
+//                Canvas(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .aspectRatio(aspect)
+//                ) {
+//                    val a = ocrResult
+//                    val img = bmp.asImageBitmap()
+//                    val dstSize = IntSize(size.width.toInt(), size.height.toInt())
+//                    drawImage(
+//                        image = img,
+//                        srcSize = IntSize(img.width, img.height),
+//                        dstSize = dstSize
+//                    )
+//                    deepSkyBlue.drawOverlay(this, Size(size.width, size.height))
+//                }
+//            }
+//        }
+
+        // usage 2
         item {
             Box(
                 modifier = Modifier.fillMaxWidth()
@@ -151,7 +180,6 @@ fun MainScreen(modifier: Modifier = Modifier) {
                                 srcSize = IntSize(img.width, img.height),
                                 dstSize = dstSize
                             )
-//                            deepSkyBlue.drawOverlay(this, Size(size.width, size.height))
                         }
                     }
                 }
@@ -160,12 +188,15 @@ fun MainScreen(modifier: Modifier = Modifier) {
         }
         item { Spacer(Modifier.height(12.dp)) }
 
+        item {
+            Text(summaryText)
+        }
+
         item { Spacer(Modifier.height(12.dp)) }
 
         item {
-            val text = ocrResult?.blocks?.joinToString("\n\n") { b ->
-                val c = b.cornerPoints.joinToString(", ") { p -> "(${p.x},${p.y})" }
-                "Text: ${b.text}\nCorners: $c"
+            val text = ocrResult?.blocks?.joinToString("\n") { b ->
+                "Text: ${b.text}\n"
             } ?: ""
             Text(text)
         }

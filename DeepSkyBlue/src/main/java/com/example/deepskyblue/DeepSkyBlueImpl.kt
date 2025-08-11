@@ -22,7 +22,16 @@ import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.math.max
 import kotlin.math.min
@@ -178,6 +187,97 @@ internal class DeepSkyBlueImpl(private val appContext: Context) : DeepSkyBlue {
     }
 
     override fun getSelectedIndex(): Int? = selectedIndex
+
+    private val http by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
+    private fun apiKey(): String = runCatching {
+        appContext.getString(R.string.openai_api_key)
+    }.getOrDefault("")
+
+    private fun modelOrDefault(m: String?): String = runCatching {
+        val fromRes = appContext.getString(R.string.openai_model)
+        val chosen = m ?: fromRes
+        if (chosen.isBlank()) "gpt-4o-mini" else chosen
+    }.getOrDefault("gpt-4o-mini")
+
+    private suspend fun requestOpenAIAPI(task: String, text: String, model: String?, langHint: String?): String =
+        withContext(Dispatchers.IO) {
+            val k = apiKey()
+            if (k.isBlank()) throw IllegalStateException("OPENAI_API_KEY가 비어 있습니다")
+            val sys = if (task == "summarize") {
+                buildString {
+                    append("You are a concise summarizer. Summarize the text in max 3 to 4 sentences.")
+                    append("If the text is Korean or langHint is 'ko', respond in Korean.")
+                }
+            } else if (task == "translate") {
+                buildString {
+                    append("Translate the text.")
+                    append("If the text is English, translate to Korean. If the text is Korean, translate to English.")
+                }
+            } else ""
+
+            val payload = JSONObject().apply {
+                put("model", modelOrDefault(model))
+                put("temperature", 0.2)
+                put("messages", JSONArray().apply {
+                    put(JSONObject().put("role","system").put("content", sys))
+                    if (!langHint.isNullOrBlank()) put(JSONObject().put("role","user").put("content","langHint=$langHint"))
+                    put(JSONObject().put("role","user").put("content","$task\n$text"))
+                })
+            }
+            val req = Request.Builder()
+                .url("https://api.openai.com/v1/chat/completions")
+                .addHeader("Authorization", "Bearer $k")
+                .addHeader("Content-Type", "application/json")
+                .post(payload.toString().toRequestBody("application/json".toMediaType()))
+                .build()
+            try {
+                http.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) {
+                        val body = resp.body?.string().orEmpty()
+                        throw RuntimeException("OpenAI 오류 ${resp.code}: $body")
+                    }
+                    val body = resp.body?.string() ?: throw RuntimeException("빈 응답")
+                    val root = JSONObject(body)
+                    val content = root.optJSONArray("choices")
+                        ?.optJSONObject(0)
+                        ?.optJSONObject("message")
+                        ?.optString("content")
+                        ?.trim()
+                        .orEmpty()
+                    if (content.isBlank()) throw RuntimeException("요약 결과가 비어 있습니다")
+                    content
+                }
+            } catch (e: Exception) {
+                throw RuntimeException("요약 호출 실패: ${e.message}", e)
+            }
+        }
+
+
+    override suspend fun summarizeText(text: String, model: String?, langHint: String?): String =
+        requestOpenAIAPI("summarize", text, model, langHint)
+
+    override suspend fun summarizeAll(model: String?, langHint: String?): String? {
+        val r = lastResult ?: return null
+        if (r.blocks.isEmpty()) return ""
+        val full = r.blocks.joinToString("\n") { it.text }
+        return requestOpenAIAPI("summarize", full, model, langHint)
+    }
+
+    override suspend fun summarizeSelected(model: String?, langHint: String?): String? {
+        val t = getSelectedText() ?: return null
+        return requestOpenAIAPI("summarize", t, model, langHint)
+    }
+
+    override suspend fun translateSelected(model: String?, langHint: String?): String? {
+        val t = getSelectedText() ?: return null
+        return requestOpenAIAPI("translate", t, model, langHint)
+    }
 
 
     private suspend fun <T> awaitTask(task: Task<T>): T = suspendCancellableCoroutine { cont ->
