@@ -1,4 +1,3 @@
-// com.example.deepskyblue.ui/DeepSkyBlueOverlayBox.kt
 package com.example.deepskyblue.ui
 
 import androidx.compose.foundation.Canvas
@@ -31,12 +30,37 @@ import com.example.deepskyblue.DeepSkyBlueOverlayStyle
 import kotlinx.coroutines.launch
 
 
+
+/**
+ * Represents an action shown in the context menu for a selected OCR block.
+ *
+ * @param id Stable identifier for the action.
+ * @param label UI label to display.
+ * @param run Callback invoked with the [OcrMenuHit] when selected.
+ * @since 0.1.0
+ */
 data class DeepSkyBlueAction(
     val id: String,
     val label: String,
     val run: (hit: OcrMenuHit) -> Unit
 )
 
+/**
+ * Context of a menu invocation, including text, block index,
+ * and both canvas and image coordinates at the click point.
+ *
+ * Coordinates:
+ * - canvasX/canvasY: as drawn on the UI canvas (pixels)
+ * - imageX/imageY: in original image coordinates (pixels)
+ *
+ * @param text Text content of the selected block.
+ * @param blockIndex Index of the selected block within [OcrResult.blocks].
+ * @param canvasX X on canvas at menu invocation.
+ * @param canvasY Y on canvas at menu invocation.
+ * @param imageX X in original image pixels at menu invocation.
+ * @param imageY Y in original image pixels at menu invocation.
+ * @since 0.1.0
+ */
 data class OcrMenuHit(
     val text: String,
     val blockIndex: Int,
@@ -46,7 +70,34 @@ data class OcrMenuHit(
     val imageY: Float
 )
 
-
+/**
+ * Composable overlay that draws OCR masks/outlines on top of your content,
+ * handles taps to select blocks, and shows a contextual menu with built‑in
+ * actions (copy, summarize, translate) plus optional [extraActions].
+ *
+ * Typical usage:
+ * ```
+ * DeepSkyBlueOverlayBox(
+ *   engine = engine,
+ *   result = ocrResult,
+ *   modifier = Modifier.fillMaxWidth()
+ * ) {
+ *   Image(bitmap = imageBitmap, contentDescription = null)
+ * }
+ * ```
+ *
+ * The composable calls [engine.onTouchCanvas] to update selection,
+ * and then renders the overlay via [engine.drawOverlay].
+ *
+ * @param engine OCR/overlay engine implementing [DeepSkyBlue].
+ * @param result Current OCR result; when changed, overlay is redrawn.
+ * @param copyEnabled Whether the "Copy" default action is shown.
+ * @param extraActions Additional actions appended to the menu.
+ * @param overlayStyle Visual style for overlay rendering.
+ * @param modifier Compose modifier for the overlay container.
+ * @param content Underlay content (usually your image).
+ * @since 0.1.0
+ */
 @Composable
 fun DeepSkyBlueOverlayBox(
     engine: DeepSkyBlue,
