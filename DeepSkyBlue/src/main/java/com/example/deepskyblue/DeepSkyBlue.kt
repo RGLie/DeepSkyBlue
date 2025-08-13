@@ -43,7 +43,8 @@ interface DeepSkyBlue {
 
     fun drawOverlay(
         drawScope: DrawScope,
-        canvasSize: Size
+        canvasSize: Size,
+        style: DeepSkyBlueOverlayStyle = DeepSkyBlueOverlayStyle()
     )
 
     fun handleTouch(x: Float, y: Float): Boolean

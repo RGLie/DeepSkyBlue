@@ -104,15 +104,26 @@ internal class DeepSkyBlueImpl(private val appContext: Context) : DeepSkyBlue {
         selectedIndex = null
     }
 
-    override fun drawOverlay(drawScope: DrawScope, canvasSize: Size) {
+    override fun drawOverlay(
+        drawScope: DrawScope,
+        canvasSize: Size,
+        style: DeepSkyBlueOverlayStyle
+    ) {
         val result = lastResult ?: return
         val sx = if (result.imageWidth == 0) 1f else canvasSize.width / result.imageWidth
         val sy = if (result.imageHeight == 0) 1f else canvasSize.height / result.imageHeight
-        val stroke = Stroke(width = max(canvasSize.minDimension * 0.003f, 2f))
+        val autoStroke = max(canvasSize.minDimension * 0.003f, 2f)
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = style.strokeWidthPx ?: autoStroke
+        )
 
         val layerRect = androidx.compose.ui.geometry.Rect(0f, 0f, canvasSize.width, canvasSize.height)
-        val overlayPaint = androidx.compose.ui.graphics.Paint().apply { color = Color.Black.copy(alpha = 0.5f) }
-        val clearPaint = androidx.compose.ui.graphics.Paint().apply { blendMode = androidx.compose.ui.graphics.BlendMode.Clear }
+        val overlayPaint = androidx.compose.ui.graphics.Paint().apply {
+            color = style.maskColor.copy(alpha = style.maskAlpha)
+        }
+        val clearPaint = androidx.compose.ui.graphics.Paint().apply {
+            blendMode = androidx.compose.ui.graphics.BlendMode.Clear
+        }
 
         drawScope.drawIntoCanvas { c ->
             c.saveLayer(layerRect, androidx.compose.ui.graphics.Paint())
@@ -136,18 +147,19 @@ internal class DeepSkyBlueImpl(private val appContext: Context) : DeepSkyBlue {
             c.restore()
         }
 
-        result.blocks.forEachIndexed { idx, b ->
+        val strokeColor = style.strokeColor.copy(alpha = style.strokeAlpha)
+        result.blocks.forEach { b ->
             if (b.cornerPoints.size >= 4) {
                 val path = androidx.compose.ui.graphics.Path().apply {
                     moveTo(b.cornerPoints[0].x * sx, b.cornerPoints[0].y * sy)
                     for (i in 1 until b.cornerPoints.size) lineTo(b.cornerPoints[i].x * sx, b.cornerPoints[i].y * sy)
                     close()
                 }
-                val color = Color.White.copy(alpha = 1f)
-                drawScope.drawPath(path = path, color = color, style = stroke)
+                drawScope.drawPath(path = path, color = strokeColor, style = stroke)
             }
         }
     }
+
 
 
     override fun handleTouch(x: Float, y: Float): Boolean {

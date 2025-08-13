@@ -36,9 +36,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.IntSize
 import com.example.deepskyblue.model.OcrResult
 import com.example.deepskyblue.ui.DeepSkyBlueAction
-import com.example.deepskyblue.ui.DeepSkyBlueImageView
 import com.example.deepskyblue.ui.DeepSkyBlueOverlayBox
-import com.example.deepskyblue.ui.DeepSkyBluePreview
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {

@@ -27,6 +27,7 @@ import androidx.compose.ui.zIndex
 import com.example.deepskyblue.DeepSkyBlue
 import com.example.deepskyblue.model.OcrResult
 import androidx.compose.runtime.LaunchedEffect
+import com.example.deepskyblue.DeepSkyBlueOverlayStyle
 import kotlinx.coroutines.launch
 
 
@@ -52,6 +53,7 @@ fun DeepSkyBlueOverlayBox(
     result: OcrResult?,
     copyEnabled: Boolean = true,
     extraActions: List<DeepSkyBlueAction> = emptyList(),
+    overlayStyle: DeepSkyBlueOverlayStyle = DeepSkyBlueOverlayStyle(),
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -65,6 +67,7 @@ fun DeepSkyBlueOverlayBox(
 
     val scope = rememberCoroutineScope()
     var dialogVisible by remember { mutableStateOf(false) }
+    var dialogTitle by remember { mutableStateOf("결과") }   // 추가: 작업별 제목 상태
     var dialogText by remember { mutableStateOf("요약 중…") }
     val scroll = rememberScrollState()
 
@@ -93,7 +96,7 @@ fun DeepSkyBlueOverlayBox(
                     }
             ) {
                 val a = redrawTick
-                engine.drawOverlay(this, Size(size.width, size.height))
+                engine.drawOverlay(this, Size(size.width, size.height), overlayStyle)
             }
         }
 
@@ -112,6 +115,7 @@ fun DeepSkyBlueOverlayBox(
                     DropdownMenuItem(text = { Text("요약") }, onClick = {
                         menuVisible = false
                         dialogVisible = true
+                        dialogTitle = "요약"
                         dialogText = "요약 중…"
                         scope.launch {
                             try {
@@ -128,6 +132,7 @@ fun DeepSkyBlueOverlayBox(
                     DropdownMenuItem(text = { Text("번역") }, onClick = {
                         menuVisible = false
                         dialogVisible = true
+                        dialogTitle = "번역"
                         dialogText = "번역 중…"
                         scope.launch {
                             try {
@@ -149,7 +154,7 @@ fun DeepSkyBlueOverlayBox(
     if (dialogVisible) {
         AlertDialog(
             onDismissRequest = { dialogVisible = false },
-            title = { Text("요약") },
+            title = { Text(dialogTitle) },
             text = {
                 Box(Modifier.heightIn(max = 320.dp).verticalScroll(scroll)) {
                     Text(dialogText)
