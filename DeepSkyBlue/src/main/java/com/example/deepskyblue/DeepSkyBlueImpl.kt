@@ -195,7 +195,7 @@ internal class DeepSkyBlueImpl(private val appContext: Context) : DeepSkyBlue {
         if (res.imageWidth <= 0 || res.imageHeight <= 0 || canvasWidth <= 0f || canvasHeight <= 0f) return false
         val ix = x * res.imageWidth / canvasWidth
         val iy = y * res.imageHeight / canvasHeight
-        return handleTouch(ix, iy) // = 기존 handleTouch(ix, iy)
+        return handleTouch(ix, iy)
     }
 
     override fun getSelectedIndex(): Int? = selectedIndex

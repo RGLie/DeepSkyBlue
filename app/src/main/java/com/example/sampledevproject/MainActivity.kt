@@ -30,10 +30,12 @@ import android.content.Context
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.IntSize
+import com.example.deepskyblue.DeepSkyBlueOverlayStyle
 import com.example.deepskyblue.model.OcrResult
 import com.example.deepskyblue.ui.DeepSkyBlueAction
 import com.example.deepskyblue.ui.DeepSkyBlueOverlayBox
@@ -77,7 +79,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
     var loading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
-    var touchTick by remember { mutableStateOf(0) } // 선택 변경 트리거
+    var touchTick by remember { mutableStateOf(0) }
     var summaryText by remember { mutableStateOf("") }
 
 
@@ -157,9 +159,14 @@ fun MainScreen(modifier: Modifier = Modifier) {
                     engine = deepSkyBlue,
                     result = ocrResult,
                     copyEnabled = true,
+//                    overlayStyle = DeepSkyBlueOverlayStyle(
+//                        maskAlpha = 0.2f,
+//                        strokeColor = Color(0xFF00D8FF),
+//                        strokeAlpha = 1f,
+//                        strokeWidthPx = 3f
+//                    ),
                     extraActions = listOf(
                         DeepSkyBlueAction("translate", "번역") { hit ->
-                            /* 번역 호출 지점 */
                         }
                     )
                 ) {
@@ -202,19 +209,6 @@ fun MainScreen(modifier: Modifier = Modifier) {
         item {
             Text("blocks: ${ocrResult?.blocks?.size ?: 0}")
         }
-//        item {
-//            DeepSkyBlueImageView(
-//                bitmap = bitmap,
-//                useKorean = true,
-//                resultCallback = { result -> ocrResult = result },
-//                modifier = Modifier.fillMaxWidth()
-//            )
-//        }
-//
-//        item { Spacer(Modifier.height(15.dp)) }
-//        item { Text(text = ocrResult) }
-
-
     }
 }
 
